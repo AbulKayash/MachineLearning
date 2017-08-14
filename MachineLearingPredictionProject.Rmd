@@ -1,0 +1,83 @@
+---
+title: "Machine Learing Prediction Project"
+author: "Abul Kayash"
+date: "14 August 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior. 
+
+The goal of your project is to predict the manner in which they did the exercise.
+
+## Load The Libraries
+```{r Load Libraries}
+library(knitr)
+library(caret)
+library(rpart)
+library(randomForest)
+library(ggplot2)
+library(rattle)
+
+```
+
+## Load & CLean Data
+```{r Load Data}
+
+trainData <- read.csv("pml-training.csv",na.strings=c("NA","#DIV/0!",""), header=TRUE)
+benchMark <- read.csv("pml-testing.csv", na.strings=c("NA","#DIV/0!",""), header=TRUE)
+
+# remove id column as they are unique for each row thus not a useful predictor
+trainData <- trainData [,-1] 
+benchMark <- benchMark [,-1]
+
+
+# remove null columns
+trainData <- trainData[, unlist(lapply(trainData, function(x) !any(is.na(x))))]
+benchMark <- benchMark[, unlist(lapply(benchMark, function(x) !any(is.na(x))))]
+
+dim (trainData)
+dim (benchMark)
+
+
+
+```
+
+
+
+## Prepare Training & Partion Set
+```{r Training&Partion}
+# Set seed to make results reproducible
+set.seed(5315)
+
+inTrain <- createDataPartition(y=trainData$classe , p=0.7, list=FALSE)
+training <- trainData[inTrain,]
+testing <- trainData[-inTrain,]
+
+dim(testing)
+dim(training)
+
+```
+
+## Build Prediction Model
+```{r Prediction}
+
+#Build 
+controlDTree <- trainControl(method="cv", 5)
+modelDTree <- train(classe ~ ., data=training, method="rf", trControl=controlDTree, ntree=150)
+
+#Test the model.
+confusionMatrix(predict(modelDTree, testing), testing$classe)
+
+#Very high accuracy rate 99.88%, thus we have a very good model to predict the outcome of the training set.    
+
+predict(modelDTree, benchMark)
+
+```
+
+
+
